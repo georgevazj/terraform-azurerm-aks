@@ -27,6 +27,26 @@ data "azurerm_subnet" "subnet" {
   virtual_network_name = var.vnet_name
 }
 
+resource "azurerm_log_analytics_workspace" "lwk" {
+  name = var.aks_name
+  resource_group_name = module.workload.resource_group_name
+  location = module.workload.resource_group_location
+  sku                 = "PerGB2018"
+}
+
+resource "azurerm_log_analytics_solution" "lwk_solution" {
+  solution_name = "Containers"
+  workspace_id  = azurerm_log_analytics_workspace.lwk.id
+  workspace_name = azurerm_log_analytics_workspace.lwk.name
+  location = module.workload.resource_group_location
+  resource_group_name = module.workload.resource_group_name
+
+  plan {
+    publisher = "Microsoft"
+    product   = "OMSGallery/Containers"
+  }
+}
+
 resource "azurerm_private_dns_zone" "dns_zone" {
   name                = "privatelink.westeurope.azmk8s.io"
   resource_group_name = module.workload.resource_group_name

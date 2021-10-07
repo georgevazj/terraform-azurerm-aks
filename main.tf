@@ -68,6 +68,11 @@ resource "azurerm_kubernetes_cluster" "aks" {
     network_policy = var.network_policy
   }
 
+  identity {
+    type = "UserAssigned"
+    user_assigned_identity_id = azurerm_user_assigned_identity.msi.id
+  }
+
   addon_profile {
     aci_connector_linux {
       enabled = false

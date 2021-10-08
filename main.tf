@@ -21,10 +21,32 @@ module "workload" {
   workload_acronym = var.workload_acronym
 }
 
-data "azurerm_subnet" "subnet" {
-  name                 = var.snet_name
-  resource_group_name  = var.vnet_rsg_name
-  virtual_network_name = var.vnet_name
+data azurerm_virtual_network "vnet" {
+  name                = var.vnet_name
+  resource_group_name = var.vnet_rsg_name
+}
+
+module "udr" {
+  source  = "app.terraform.io/georgevazj-lab/udr/azurerm"
+  version = "0.0.1"
+  location = module.workload.resource_group_location
+  name = var.aks_name
+  resource_group_name = data.azurerm_virtual_network.vnet.resource_group_name
+}
+
+module "subnet" {
+  source  = "app.terraform.io/georgevazj-lab/subnet/azure"
+  version = "0.0.1"
+
+  address_prefixes = var.subnet_address_prefixes
+  resource_group_name = data.azurerm_virtual_network.vnet.resource_group_name
+  subnet_name = var.subnet_name
+  vnet_name = data.azurerm_virtual_network.vnet.name
+}
+
+resource "azurerm_subnet_route_table_association" "subnet_udr" {
+  route_table_id = module.udr.udr_id
+  subnet_id      = module.subnet.subnet_id
 }
 
 resource "azurerm_log_analytics_workspace" "lwk" {
@@ -36,7 +58,7 @@ resource "azurerm_log_analytics_workspace" "lwk" {
 
 resource "azurerm_log_analytics_solution" "lwk_solution" {
   solution_name = "Containers"
-  workspace_id  = azurerm_log_analytics_workspace.lwk.id
+  workspace_resource_id  = azurerm_log_analytics_workspace.lwk.id
   workspace_name = azurerm_log_analytics_workspace.lwk.name
   location = module.workload.resource_group_location
   resource_group_name = module.workload.resource_group_name
@@ -78,7 +100,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
     node_count     = var.node_count
     type           = "VirtualMachineScaleSets"
     vm_size = var.vm_size
-    vnet_subnet_id = data.azurerm_subnet.subnet.id
+    vnet_subnet_id = module.subnet.subnet_id
   }
 
   network_profile {
@@ -111,7 +133,8 @@ resource "azurerm_kubernetes_cluster" "aks" {
     }
 
     oms_agent {
-      enabled = false
+      enabled = true
+      log_analytics_workspace_id = azurerm_log_analytics_workspace.lwk.id
     }
   }
 }

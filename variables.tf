@@ -20,9 +20,14 @@ variable "vnet_name" {
   description = "(Required) Virtual network name"
 }
 
-variable "snet_name" {
+variable "subnet_name" {
   type = string
   description = "(Required) Subnet name"
+}
+
+variable "subnet_address_prefixes" {
+  type = list(string)
+  description = "(Required) Subnet address prefixes"
 }
 
 ## Kubernetes service

@@ -90,9 +90,8 @@ resource "azurerm_kubernetes_cluster" "aks" {
   location            = module.workload.resource_group_location
   name                = var.aks_name
   resource_group_name = module.workload.resource_group_name
-  dns_prefix_private_cluster = var.dns_prefix
+  dns_prefix = var.dns_prefix
   private_cluster_enabled = true
-  private_dns_zone_id = azurerm_private_dns_zone.dns_zone.id
 
   default_node_pool {
     name    = var.nodepool_name

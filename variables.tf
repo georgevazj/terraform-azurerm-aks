@@ -6,7 +6,7 @@ variable "description" {
 
 variable "workload_acronym" {
   type = string
-  description = "(Required) Santander project acronym"
+  description = "(Required) Workload acronym"
 }
 
 ## Networking
